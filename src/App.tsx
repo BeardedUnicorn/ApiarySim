@@ -1,30 +1,75 @@
-import React from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {ResourceProvider, useResource} from './src/context/ResourceContext.tsx';
-import BeeHive from './src/BeeHive.tsx';
+import React, { useState } from 'react';
+import { SafeAreaView, StyleSheet } from 'react-native';
+import SelectHive from './SelectHive';
+import SelectFrame from './SelectFrame';
+import SelectQueen from './SelectQueen';
+import NucleusColonyInfo from './NucleusColonyInfo';
+import BeeHive from './BeeHive';
+import { ResourceProvider } from './context/ResourceContext';
+import { Hive } from './data/hiveData';
+import { QueenBee } from './data/queenBeeData';
+import { Frame } from './data/frameData';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const App = () => {
-  return (
-    <ResourceProvider>
-      <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollView}>
-          <ResourceDisplay />
-          <BeeHive id={1} />
-          <BeeHive id={2} />
-          {/* Add more hives as needed */}
-        </ScrollView>
-      </SafeAreaView>
-    </ResourceProvider>
-  );
-};
+  const [step, setStep] = useState(1);
+  const [selectedHive, setSelectedHive] = useState<Hive | null>(null);
+  const [selectedFrame, setSelectedFrame] = useState<Frame | null>(null);
+  const [selectedQueen, setSelectedQueen] = useState<QueenBee | null>(null);
+  const [initialWorkers, setInitialWorkers] = useState(0);
+  const [initialDrones, setInitialDrones] = useState(0);
 
-const ResourceDisplay = () => {
-  const {food, totalHoney} = useResource();
+  const handleSelectHive = (hive: Hive) => {
+    setSelectedHive(hive);
+    setStep(2);
+  };
+
+  const handleSelectFrame = (frame: Frame) => {
+    setSelectedFrame(frame);
+    setStep(3);
+  };
+
+  const handleSelectQueen = (queen: QueenBee) => {
+    setSelectedQueen(queen);
+    setStep(4);
+  };
+
+  const handleSetInitialBees = (workers: number, drones: number) => {
+    setInitialWorkers(workers);
+    setInitialDrones(drones);
+  };
+
+  const handleNext = () => {
+    setStep(5);
+  };
+
   return (
-    <View style={styles.resources}>
-      <Text>Food: {food}</Text>
-      <Text>Total Honey: {totalHoney}</Text>
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ResourceProvider>
+        <SafeAreaView style={styles.container}>
+          {step === 1 && <SelectHive onSelectHive={handleSelectHive} />}
+          {step === 2 && <SelectFrame onSelectFrame={handleSelectFrame} />}
+          {step === 3 && <SelectQueen onSelectQueen={handleSelectQueen} />}
+          {step === 4 && selectedFrame && (
+            <NucleusColonyInfo
+              onNext={handleNext}
+              selectedFrame={selectedFrame.type}
+              onSetInitialBees={handleSetInitialBees}
+            />
+          )}
+          {step === 5 && selectedHive && selectedQueen && selectedFrame && (
+            <BeeHive
+              id={1}
+              selectedHive={selectedHive}
+              selectedQueen={selectedQueen}
+              selectedFrame={selectedFrame}
+              initialWorkers={initialWorkers}
+              initialDrones={initialDrones}
+            />
+          )}
+        </SafeAreaView>
+      </ResourceProvider>
+    </GestureHandlerRootView>
   );
 };
 
@@ -32,15 +77,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-  },
-  scrollView: {
-    alignItems: 'center',
-  },
-  resources: {
-    padding: 10,
-    margin: 10,
-    backgroundColor: 'lightblue',
-    borderRadius: 5,
+    justifyContent: 'center',
     alignItems: 'center',
   },
 });
